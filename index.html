@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 知识库管理</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">RAG</div>
+  <nav>
+    <button class="nav-btn active" data-page="chat">
+      <span class="nav-icon">💬</span> AI 对话
+    </button>
+    <button class="nav-btn" data-page="search">
+      <span class="nav-icon">🔍</span> 文档检索
+    </button>
+    <button class="nav-btn" data-page="ingest">
+      <span class="nav-icon">📥</span> 文档摄入
+    </button>
+    <button class="nav-btn" data-page="manage">
+      <span class="nav-icon">📋</span> 知识库管理
+    </button>
+    <button class="nav-btn" data-page="crawler">
+      <span class="nav-icon">🕷️</span> 爬虫管理
+    </button>
+    <button class="nav-btn" data-page="categories">
+      <span class="nav-icon">🗂️</span> 分类管理
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <span class="nav-icon">⚙</span> 系统设置
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status-dot" id="sidebar-status"></div>
+    <span id="sidebar-status-text">检测中...</span>
+  </div>
+</aside>
+
+<main class="content">
+
+  <!--  AI 对话  -->
+  <section id="page-chat" class="page active">
+    <h1>AI 对话</h1>
+    <p class="subtitle" id="chat-subtitle">基于知识库的智能问答（RAG）</p>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-empty">
+          <div class="chat-empty-icon">💡</div>
+          <p>基于你的知识库，用自然语言提问</p>
+          <p class="chat-empty-hint">例如：「总结一下布丁的制作方法」「知识库中有哪些关于 Python 的内容」</p>
+        </div>
+      </div>
+
+      <div class="chat-controls">
+        <label class="rag-toggle" title="关闭则不使用知识库上下文">
+          <input type="checkbox" id="rag-toggle" checked>
+          <span class="toggle-label">📚 知识库增强</span>
+        </label>
+        <label class="rag-toggle">
+          <input type="number" id="chat-topk" value="5" min="1" max="20" style="width:44px">
+          <span class="toggle-label">上下文条数</span>
+        </label>
+        <label class="rag-toggle" style="margin-left:auto">
+          <span class="toggle-label">模型</span>
+          <select id="chat-model-select" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text);font-size:13px;max-width:200px">
+            <option value="">加载中...</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="chat-input-bar">
+        <textarea id="chat-input" placeholder="输入问题..." rows="1"></textarea>
+        <button id="chat-send-btn" class="btn btn-primary">发送</button>
+        <button id="chat-stop-btn" class="btn" style="display:none">停止</button>
+      </div>
+
+      <div class="chat-status" id="chat-status"></div>
+    </div>
+  </section>
+
+  <!--  文档检索  -->
+  <section id="page-search" class="page">
+    <h1>文档检索</h1>
+    <p class="subtitle">关键词 + 语义搜索知识库</p>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="输入查找内容...">
+      <button id="search-btn" class="btn btn-primary">搜索</button>
+    </div>
+    <div class="search-options">
+      <label>返回数量 <input type="number" id="topk" value="5" min="1" max="20"></label>
+      <label>最低相似度 <input type="number" id="threshold" value="0.4" min="0.1" max="1" step="0.05"></label>
+      <span class="result-count" id="result-count"></span>
+    </div>
+    <div class="loading" id="search-loading">正在搜索...</div>
+    <div class="results" id="results"></div>
+  </section>
+
+  <!--  文档摄入  -->
+  <section id="page-ingest" class="page">
+    <h1>文档摄入</h1>
+    <p class="subtitle">把文本存入知识库</p>
+    <div class="ingest-layout">
+      <div class="card ingest-card">
+        <h3>📝 粘贴文本</h3>
+        <textarea id="paste-content" placeholder="在此粘贴文档内容...&#10;&#10;支持 Markdown、纯文本等格式"></textarea>
+        <div class="ingest-meta">
+          <input type="text" id="paste-title" placeholder="文档标题（可选）">
+          <input type="text" id="paste-source" placeholder="来源（可选）">
+        </div>
+        <button class="btn btn-primary" id="ingest-text-btn">📥 摄入</button>
+      </div>
+      <div class="card ingest-card">
+        <h3>📂 导入文件</h3>
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-hint">
+            <span class="drop-icon">📂</span>
+            <p>拖拽文件到这里，或点击选择</p>
+            <p class="drop-sub">支持 .txt .md .py .json 等</p>
+          </div>
+          <input type="file" id="file-input" multiple hidden>
+        </div>
+        <div class="ingest-meta">
+          <input type="text" id="dir-path" placeholder="或输入文件夹路径...">
+          <button class="btn" id="import-dir-btn">导入文件夹</button>
+        </div>
+        <div class="file-queue" id="file-queue"></div>
+        <button class="btn btn-success" id="batch-ingest-btn" disabled>🚀 批量导入</button>
+      </div>
+    </div>
+  </section>
+
+  <!--  知识库管理  -->
+  <section id="page-manage" class="page">
+    <h1>知识库管理</h1>
+    <p class="subtitle">查看和管理已入库文档</p>
+    <div class="manage-toolbar">
+      <button class="btn" id="refresh-docs-btn">🔄 刷新</button>
+      <span class="doc-count" id="doc-count"></span>
+    </div>
+    <div class="table-container">
+      <table id="docs-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>标题</th>
+            <th>来源</th>
+            <th>类型</th>
+            <th>块数</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="docs-tbody"></tbody>
+      </table>
+    </div>
+    <div class="manage-actions">
+      <button class="btn btn-danger" id="delete-selected-btn" disabled>🗑 删除选中文档</button>
+    </div>
+  </section>
+
+  <!--  爬虫管理  -->
+  <section id="page-crawler" class="page">
+    <h1>🕷️ 爬虫管理</h1>
+    <p class="subtitle">管理数据源，一键爬取并摄入</p>
+
+    <div class="settings-section">
+      <h3>📋 数据源列表</h3>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <input type="text" id="new-source-name" placeholder="源名称" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);flex:1">
+        <input type="text" id="new-source-url" placeholder="URL" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);flex:2">
+        <input type="text" id="new-source-category" placeholder="分类" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);flex:0.8">
+        <button class="btn btn-primary" id="add-source-btn">+ 新增</button>
+      </div>
+      <div id="sources-list">
+        <p class="config-loading">加载中...</p>
+      </div>
+      <div id="source-settings-panel-container"></div>
+    </div>
+
+    <div id="crawl-progress-container" style="display:none;margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);padding:20px;background:var(--bg-card)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span id="crawl-progress-title" style="font-weight:600">🕷\uFE0F 正在爬取...</span>
+        <span id="crawl-progress-text" style="font-size:13px;color:var(--text-secondary)">准备中</span>
+      </div>
+      <div style="width:100%;height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden">
+        <div id="crawl-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:4px;transition:width 0.3s ease"></div>
+      </div>
+      <div id="crawl-progress-detail" style="margin-top:10px;font-size:13px;color:var(--text-secondary);max-height:120px;overflow-y:auto">
+        <div id="crawl-progress-log"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <span id="crawl-progress-stats" style="font-size:12px;color:var(--text-muted)"></span>
+        <button class="btn btn-danger" id="crawl-progress-cancel" style="padding:4px 12px;font-size:12px;display:none">取消</button>
+      </div>
+    </div>
+
+    <div id="crawl-results" style="display:none;margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--bg-card)">
+      <h3>爬取结果</h3>
+      <div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-success" id="batch-select-all">☑ 全选</button>
+        <button class="btn" id="clear-results-btn">✕ 清空结果</button>
+        <button class="btn btn-success" id="batch-ingest-selected">📥 摄入选中</button>
+        <select id="min-quality-select" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px">
+          <option value="C">全部摄入</option>
+          <option value="B">仅B级以上</option>
+          <option value="A">仅A级</option>
+        </select>
+        <span id="crawl-results-stats" style="color:var(--text-secondary);font-size:13px;padding:6px 0"></span>
+      </div>
+      <div id="crawl-articles-list" style="max-height:600px;overflow-y:auto"></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🔗 临时抓取</h3>
+      <p class="form-hint" style="margin-bottom:10px">输入任意网页 URL，自动提取正文并摄入</p>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <input type="text" id="temp-url-input" placeholder="输入网页 URL..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px">
+        <button class="btn" id="preview-url-btn">👁 预览</button>
+        <button class="btn btn-primary" id="crawl-ingest-btn">📥 抓取并摄入</button>
+      </div>
+      <div id="crawl-preview" style="display:none;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-height:400px;overflow-y:auto">
+        <h4 id="crawl-preview-title" style="margin-bottom:8px"></h4>
+        <pre id="crawl-preview-content" style="font-size:13px;white-space:pre-wrap;line-height:1.6;color:var(--text)"></pre>
+        <div id="crawl-preview-entities" style="margin-top:10px;font-size:13px;color:var(--text-secondary)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!--  分类管理  -->
+  <section id="page-categories" class="page">
+    <h1>🗂️ 分类管理</h1>
+    <p class="subtitle">创建分类，将文档归入文件夹</p>
+
+    <div class="category-layout">
+      <div class="category-sidebar">
+        <div class="settings-section">
+          <h3>分类文件夹</h3>
+          <div id="categories-list" class="cat-tree">
+            <p class="config-loading">加载中...</p>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>创建分类</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="cat-name-input" placeholder="分类名称" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-width:120px">
+            <input type="color" id="cat-color-input" value="#3b82f6" style="padding:2px;border:1px solid var(--border);border-radius:4px;height:36px;width:40px">
+            <button class="btn btn-primary" id="create-cat-btn" style="padding:8px 14px">+ 创建</button>
+          </div>
+        </div>
+      </div>
+      <div class="category-main">
+        <div class="cat-docs-header">
+          <h3 id="cat-docs-title">选择左侧分类查看文档</h3>
+          <div class="cat-docs-actions">
+            <button class="btn" id="refresh-cat-docs-btn">🔄 刷新</button>
+            <button class="btn btn-success" id="show-uncategorized-btn">📋 未分类文档</button>
+          </div>
+        </div>
+        <div id="cat-docs-table-container" class="table-container">
+          <p style="color:var(--text-muted);text-align:center;padding:30px">点击左侧分类或「未分类文档」查看</p>
+        </div>
+        <div id="cat-docs-actions" class="manage-actions" style="display:none">
+          <select id="move-to-cat-select" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-input);color:var(--text)">
+            <option value="">移动到分类...</option>
+          </select>
+          <button class="btn btn-primary" id="cat-batch-move-btn">移动选中</button>
+          <button class="btn btn-danger" id="cat-batch-remove-btn" style="display:none">从分类移除</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!--  系统设置  -->
+  <section id="page-settings" class="page">
+    <h1>系统设置</h1>
+    <p class="subtitle">LLM API 配置 & 系统状态</p>
+
+    <div class="settings-section">
+      <h3>🔮 大模型 API</h3>
+      <div class="form-group">
+        <label>API 地址 <span class="form-hint">OpenAI 兼容接口</span></label>
+        <input type="text" id="setting-api-base" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input type="password" id="setting-api-key" placeholder="sk-...">
+      </div>
+      <div class="form-group">
+        <label>模型名称</label>
+        <input type="text" id="setting-model" placeholder="gpt-4o-mini">
+      </div>
+      <div class="form-group form-row">
+        <label>温度 <input type="number" id="setting-temperature" value="0.7" min="0" max="2" step="0.1" style="width:60px"></label>
+        <label>最大 Token <input type="number" id="setting-max-tokens" value="2048" min="64" max="32768" step="64" style="width:80px"></label>
+      </div>
+      <button class="btn btn-primary" id="save-settings-btn">💾 保存设置</button>
+      <span class="settings-hint">设置保存后需重启服务生效</span>
+    </div>
+
+    <div class="settings-section">
+      <h3>📋 当前配置</h3>
+      <div class="config-display" id="config-display">
+        <div class="config-loading">加载中...</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🖥 系统状态</h3>
+      <div class="status-grid" id="status-grid">
+        <div class="card status-card" id="card-pg">
+          <div class="status-card-header"><span class="status-dot"></span><h3>PostgreSQL</h3></div>
+          <p class="status-text">检测中...</p>
+        </div>
+        <div class="card status-card" id="card-llm">
+          <div class="status-card-header"><span class="status-dot"></span><h3>LLM API</h3></div>
+          <p class="status-text">检测中...</p>
+        </div>
+        <div class="card status-card" id="card-embed">
+          <div class="status-card-header"><span class="status-dot"></span><h3>BGE-M3 嵌入</h3></div>
+          <p class="status-text">检测中...</p>
+        </div>
+        <div class="card status-card" id="card-gpu">
+          <div class="status-card-header"><span class="status-dot"></span><h3>CUDA / GPU</h3></div>
+          <p class="status-text">检测中...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<!-- 引擎加载中遮罩（必须在 script 之前） -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p class="loading-text">正在加载 RAG 引擎...</p>
+  <p class="loading-sub">BGE-M3 模型 ~2.3GB，首次加载需要 5-15 秒</p>
+  <p class="loading-elapsed" id="loading-elapsed"></p>
+</div>
+
+<!-- 文档编辑器弹窗 -->
+<div class="modal-overlay" id="doc-modal" style="display:none">
+  <div class="modal-content" style="max-width:860px;max-height:90vh">
+    <div class="modal-header">
+      <h3 id="doc-modal-title">文档编辑器</h3>
+      <button class="modal-close" id="doc-modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="doc-modal-body">
+      <div class="doc-detail-loading">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js?v=8"></script>
+</body>
+</html>

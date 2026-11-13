@@ -1,0 +1,43 @@
+postgresql:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: pgAdmin123!
+  database: ragdb
+chromadb:
+  persist_directory: ./data
+embedding:
+  model_name: ./data
+  dimension: 1024
+  device: cuda
+  batch_size: 32
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+  separators:
+  - '
+
+
+    '
+  - '
+
+    '
+  - 。
+  - .
+  - ' '
+retrieval:
+  top_k: 5
+  similarity_threshold: 0.4
+  rerank_enabled: false
+llm:
+  enabled: true
+  api_base: https://api.deepseek.com
+  api_key: sk-c1ce1395e61e4052a9dcdf8dc51433cb
+  model: deepseek-v4-flash
+  max_tokens: 2048
+  temperature: 0.7
+  timeout: 120
+projects:
+  default:
+    schema: rag_public
+    collection: rag_default

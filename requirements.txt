@@ -1,0 +1,27 @@
+# ── 核心：向量化 / 存储 / 数据库 ──
+sentence-transformers>=2.7.0
+chromadb>=1.5.0
+numpy>=1.26.0
+psycopg2-binary>=2.9.0
+
+# ── 配置 ──
+pyyaml>=6.0
+
+# ── LLM（OpenAI 兼容 API，纯标准库 urllib 实现，无额外依赖）──
+
+# ── 爬虫 ──
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+trafilatura>=1.8.0
+readability-lxml>=0.8.1
+newspaper3k>=0.2.8
+extruct>=0.16.0
+
+# ── 分词 / 词云 ──
+jieba>=0.42.1
+wordcloud>=1.9.3
+matplotlib>=3.8.0
+
+# ── 深度学习运行时（BGE-M3 依赖，CUDA 可选）──
+torch>=2.1.0

@@ -1,0 +1,37 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# ── 运行时数据（含敏感/大数据，不入库）──
+logs/
+data/chroma/
+data/documents/
+static/wordclouds/
+models/
+
+# ── 配置文件（含数据库密码 / API Key，禁止入库）──
+config/settings.yaml
+
+# ── 备份与临时文件 ──
+*.bak
+*.bak_*
+*.tmp
+*.log
+.trash_cleanup_*/
+
+# ── IDE / 系统 ──
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ── 前端临时补丁脚本 ──
+static/replace_appjs.js
+static/replace_appjs.ps1
